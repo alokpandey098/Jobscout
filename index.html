@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b6e5f">
+<meta name="description" content="JobScout: resume se fresh jobs dhundo, rank karo aur applications track karo.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>JobScout</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app shell. Header with tabs, content below. Job detail opens as a right-side drawer. */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --fg:#14201d; --muted:#5b6b66; --line:#dbe2df;
+  --accent:#0b6e5f; --accent-fg:#ffffff; --accent-soft:#dff1ed;
+  --good:#1a7f4b; --warn:#a15c00; --bad:#b3261e; --shade:rgba(10,20,17,.45);
+  --font:'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1715; --panel:#16211e; --fg:#e6efec; --muted:#93a6a0; --line:#27362f;
+  --accent:#4fd1b5; --accent-fg:#04251e; --accent-soft:#183a33;
+  --good:#5fd08f; --warn:#e5a94a; --bad:#ff8a80; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1715; --panel:#16211e; --fg:#e6efec; --muted:#93a6a0; --line:#27362f;
+  --accent:#4fd1b5; --accent-fg:#04251e; --accent-soft:#183a33;
+  --good:#5fd08f; --warn:#e5a94a; --bad:#ff8a80; --shade:rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1200px;margin:0 auto}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px;padding:14px 0 0}
+.logo{font-weight:700;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:inline-block;position:relative}
+.logo i::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid var(--accent-fg)}
+.spacer{flex:1}
+.badge{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted);background:var(--panel)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:12px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 14px;color:var(--muted);font-weight:500;white-space:nowrap;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab .n{font-family:var(--mono);font-size:11px;background:var(--accent-soft);border-radius:999px;padding:1px 7px;margin-left:6px;color:var(--fg)}
+main{padding-top:20px}
+.view[hidden]{display:none!important}
+h2{font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px;font-weight:500}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+button,select,input,textarea{font:inherit;color:var(--fg)}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 12px}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:500}
+button.ghost{border-color:transparent;background:none;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=search],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+textarea{width:100%;font:12.5px/1.55 var(--mono);resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
+.chip.hit,.chip.on{background:var(--accent-soft);border-color:var(--accent)}
+.chip.miss{border-style:dashed;color:var(--muted)}
+.chip button{border:0;background:none;padding:0 0 0 6px;color:var(--muted)}
+button.chip{padding:3px 10px;cursor:pointer}
+.two{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+.jobsgrid{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.two,.jobsgrid{grid-template-columns:minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.lbl b{font-family:var(--mono);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:24px;font-family:var(--mono);font-weight:500;line-height:1.2}
+.stat span{font-size:12.5px;color:var(--muted)}
+.job{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:14px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;align-items:start;cursor:pointer}
+.job:hover{border-color:var(--accent)}
+.jobs{display:flex;flex-direction:column;gap:10px}
+.ring{position:relative;width:56px;height:56px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:500;font-size:15px}
+.job h3{margin:0;font-size:15.5px}
+.job h3,.dh h3,.card b,.card small,.meta,.job>div,.dh>div{overflow-wrap:anywhere;min-width:0}
+.meta{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 12px;margin:2px 0 8px;font-family:var(--mono)}
+.low{color:var(--good)}.mid{color:var(--warn)}.high{color:var(--bad)}
+.star{font-size:18px;line-height:1;padding:4px 8px}
+.star.on{color:var(--warn);border-color:var(--warn)}
+@media(max-width:520px){.job{grid-template-columns:44px minmax(0,1fr)}.job .ring{width:44px;height:44px}.job>.star{grid-column:2}}
+.seg{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.seg button{white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.seg .n{font-family:var(--mono);font-size:11px;opacity:.85;margin-left:6px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.toolbar input[type=search]{flex:1;min-width:180px}
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.col{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:220px;display:flex;flex-direction:column;gap:8px}
+.col.over{border-color:var(--accent);background:var(--accent-soft)}
+.col h4{margin:0 0 4px;font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;justify-content:space-between;font-weight:500}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px;cursor:grab}
+.card b{display:block;font-size:13.5px}
+.card small{color:var(--muted)}
+.card select{width:100%;margin-top:8px;padding:4px 6px;font-size:12.5px}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+.foot{font-size:12px;color:var(--muted)}
+.bar{height:8px;background:var(--bg);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.fit{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.fit:first-of-type{border-top:0}
+.shade{position:fixed;inset:0;background:var(--shade);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--panel);border-left:1px solid var(--line);z-index:21;overflow-y:auto;
+  padding:18px max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;padding-top:calc(18px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:16px}
+.dh{display:flex;gap:14px;align-items:flex-start}
+.dh h3{margin:0;font-size:19px;letter-spacing:-.01em}
+.sec h5{margin:0 0 6px;font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500}
+.tips{margin:0;padding-left:18px;font-size:13.5px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13.5px;z-index:30;max-width:calc(100% - 32px)}
+.banner{background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font-size:13px;margin-bottom:16px}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="logo"><i></i>JobScout</div>
+    <span class="badge" id="mode">Sample data</span>
+    <div class="spacer"></div>
+    <button type="button" id="live">Jobs refresh karo</button>
+    <button type="button" id="theme" class="ghost" aria-label="Theme badlo">Theme</button>
+  </div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="profile" aria-selected="true">Profile</button>
+    <button class="tab" role="tab" data-tab="jobs" aria-selected="false">Jobs <span class="n" id="nJobs">0</span></button>
+    <button class="tab" role="tab" data-tab="pipe" aria-selected="false">Pipeline <span class="n" id="nPipe">0</span></button>
+  </nav>
+
+  <main>
+  <div class="banner" id="banner">Sample jobs dikh rahi hain, kyunki live jobs abhi load nahi hui. "Jobs refresh karo" dabao. Naye setup me jobs.json pehli baar bharne me kuch minute lagte hain, uske baad wo har 12 ghante me apne aap update hoti hai.</div>
+
+  <section class="view" id="v-profile">
+    <div class="two">
+      <div class="panel stack">
+        <h2>Resume</h2>
+        <textarea id="resume" rows="16" aria-label="Resume text" spellcheck="false" placeholder="Apna resume yahan paste karo, ya neeche se PDF / DOCX / TXT upload karo."></textarea>
+        <div class="row">
+          <input id="file" type="file" accept=".pdf,.docx,.txt,.md" hidden>
+          <button type="button" id="pick">Resume upload (PDF, DOCX, TXT)</button>
+          <button type="button" id="sample">Sample resume</button>
+          <button type="button" id="go" class="primary">Resume analyze karo</button>
+        </div>
+        <p class="foot">Resume sirf aapke browser me padha jata hai. Kahin upload ya save nahi hota (sirf aapke is browser me).</p>
+      </div>
+      <div class="stack">
+        <div class="panel stack">
+          <h2>Aapke skills</h2>
+          <div id="skills" class="chips"></div>
+          <form id="addForm" class="row"><input id="addSkill" type="text" placeholder="Skill add karo, jaise dbt" aria-label="Skill add karo" list="skillopts"><button class="primary">Add</button></form>
+          <datalist id="skillopts"></datalist>
+          <div>
+            <div class="lbl"><span>Profile strength</span><b id="strv">0%</b></div>
+            <div class="bar"><i id="strbar" style="width:0"></i></div>
+            <p class="foot" id="strnote"></p>
+          </div>
+        </div>
+        <div class="panel stack">
+          <h2>Aapka experience level</h2>
+          <select id="myLvl" aria-label="Aapka experience level"><option value="auto">Auto (resume se)</option><option value="fresher">Fresher (0-1 saal)</option><option value="mid">Mid (2-4 saal)</option><option value="senior">Senior (5-7 saal)</option><option value="lead">Lead / Manager (8+ saal)</option></select>
+          <p class="foot" id="lvlnote"></p>
+        </div>
+        <div class="panel stack">
+          <h2>AI cover letter (optional)</h2>
+          <form id="keyForm" class="row"><input id="key" type="password" placeholder="Anthropic API key (sk-ant-...)" aria-label="Anthropic API key" autocomplete="off" style="flex:1;min-width:160px"><button class="primary">Save</button><button type="button" id="keyDel" class="ghost">Hatao</button></form>
+          <p class="foot" id="keynote"></p>
+        </div>
+        <div class="panel">
+          <h2>Aapke liye best-fit roles</h2>
+          <div id="fits"></div>
+          <button type="button" class="primary" id="seeJobs" style="margin-top:10px">Saari matching jobs dekho</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-jobs" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="seg" id="lvl" role="group" aria-label="Experience level"></div>
+    <div class="jobsgrid">
+      <aside class="panel stack" aria-label="Filters">
+        <h2>Filters</h2>
+        <div><div class="lbl"><span>Posted in last</span><b id="hrsv"></b></div><input id="hrs" type="range" min="12" max="720" step="12" value="72" aria-label="Posted within hours"></div>
+        <div id="appbox"><div class="lbl"><span>Max applicants</span><b id="appv"></b></div><input id="app" type="range" min="5" max="200" step="5" value="60" aria-label="Max applicants"></div>
+        <div><div class="lbl"><span>Min skill match</span><b id="minv"></b></div><input id="min" type="range" min="0" max="100" step="5" value="20" aria-label="Minimum match"></div>
+        <div><div class="lbl"><span>Countries</span></div><div id="countries" class="chips"></div></div>
+        <label class="row"><input type="checkbox" id="onlySaved"> Sirf saved jobs</label>
+      </aside>
+      <div>
+        <div class="toolbar">
+          <input id="q" type="search" placeholder="Title ya company search karo" aria-label="Search jobs">
+          <select id="sort" aria-label="Sort">
+            <option value="best">Best match</option>
+            <option value="new">Sabse nayi</option>
+            <option value="few">Sabse kam applicants</option>
+          </select>
+        </div>
+        <div class="jobs" id="jobs"></div>
+        <p class="foot" id="srcnote"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-pipe" hidden>
+    <p class="foot" style="margin-top:0">Cards ko drag karke stage badlo, ya card ke neeche wale dropdown se.</p>
+    <div class="kanban" id="kanban"></div>
+  </section>
+  </main>
+</div>
+<div id="layer"></div>
+<div id="toastbox"></div>
+
+<script>
+const SKILLS=["python","java","javascript","typescript","c++","c#","go","rust","ruby","php","kotlin","sql","mongodb","postgresql","mysql","redis","snowflake","react","angular","vue","node.js","django","flask","fastapi","spring","aws","azure","gcp","docker","kubernetes","terraform","jenkins","git","linux","machine learning","deep learning","nlp","pytorch","tensorflow","scikit-learn","pandas","numpy","spark","hadoop","airflow","kafka","dbt","tableau","power bi","excel","data analysis","data engineering","etl","llm","rest api","graphql","microservices","devops","selenium","agile","figma","seo","salesforce","scala","bigquery","redshift","databricks","looker","mlops","computer vision","generative ai","prompt engineering","flutter","react native","android","ios","wordpress","shopify","cybersecurity","networking","qa","testing","ui/ux","ux research","marketing","sales","accounting","finance","project management","product management","customer support","recruiting","content writing","copywriting","social media","google analytics","supply chain","operations","quickbooks","sap","oracle"];
+const SAMPLE=`Priya Sharma
+Data Engineer | Bengaluru, India
+priya.sharma@example.com
+
+SUMMARY
+Data engineer with 4 years of experience building batch and streaming pipelines for e-commerce analytics.
+
+EXPERIENCE
+Data Engineer, Meridian Retail (2022 - present)
+- Built ETL pipelines in Python and SQL on AWS, moving 2 TB/day into a Snowflake-style warehouse
+- Orchestrated jobs with Airflow; added Kafka streaming for order events
+- Containerised services with Docker and deployed on Kubernetes
+- Built Tableau dashboards for the sales team; automated reports with pandas
+
+Junior Analyst, Cobalt Insights (2020 - 2022)
+- Data analysis in Excel and SQL, forecasting models with scikit-learn
+
+SKILLS
+Python, SQL, PostgreSQL, Airflow, Kafka, Spark, AWS, Docker, Kubernetes, Git, Linux, Tableau`;
+const LVL={fresher:"Fresher",mid:"Mid",senior:"Senior",lead:"Lead / Manager"};
+const LVORD=["fresher","mid","senior","lead"];
+function lvFromYears(y){return y<=1?"fresher":y<=4?"mid":y<=7?"senior":"lead"}
+function levelOf(title,desc){
+  const t=(title||"").toLowerCase(),d=(desc||"").toLowerCase();
+  if(/\b(intern|internship|trainee|apprentice|graduate|fresher|freshers|entry[- ]level|junior|jr)\b/.test(t))return "fresher";
+  if(/\b(director|head of|vp|vice president|principal|chief|lead(?! generation)|staff (engineer|software|data|scientist|developer|product|designer))\b/.test(t))return "lead";
+  if(/\b(senior|sr|manager|architect|iii)\b/.test(t))return "senior";
+  if(/\b(mid[- ]level|intermediate|ii)\b/.test(t))return "mid";
+  if(/\b(no (prior )?experience (is )?(required|needed)|freshers? (are )?(welcome|can apply|eligible)|entry[- ]level|0\s*(-|to)\s*1\s*years?)/.test(d))return "fresher";
+  const m=d.match(/\b(\d{1,2})\s*(?:\+|\s*(?:-|to)\s*\d{1,2})?\s*(?:years?|yrs?)\b(?:\s+of)?(?:\s+\w+){0,3}?\s+experience/)||d.match(/experience\s*(?:of|:)?\s*(?:at least|minimum|min\.?)?\s*(\d{1,2})\s*\+?\s*(?:years?|yrs?)/);
+  return m?lvFromYears(+m[1]):null;
+}
+function estYears(text){
+  const t=(text||"").toLowerCase();if(!t.trim())return null;
+  if(/\b(fresher|fresh graduate|recent graduate|final[- ]year|currently pursuing|seeking (an )?(internship|entry))\b/.test(t))return 0;
+  const ex=[...t.matchAll(/\b(\d{1,2}(?:\.\d)?)\s*\+?\s*(?:years?|yrs?)\b(?:\s+of)?(?:\s+\w+){0,3}?\s+experience/g)].map(m=>+m[1]);
+  if(ex.length)return Math.max(...ex);
+  const yr=new Date().getFullYear(),spans=[];
+  for(const line of t.split("\n")){
+    if(/\b(b\.?tech|b\.?e|bachelor|master|m\.?tech|mba|b\.?sc|m\.?sc|degree|university|college|school|diploma|education|cgpa|gpa)\b/.test(line))continue;
+    for(const m of line.matchAll(/\b((?:19|20)\d\d)\s*(?:-|–|—|to)\s*((?:19|20)\d\d|present|current|now|till date|to date|ongoing)\b/g)){
+      const a=+m[1],b=/\d/.test(m[2])?+m[2]:yr;if(b>=a&&a>1980&&b<=yr+1)spans.push([a,b]);
+    }
+  }
+  if(!spans.length)return null;
+  spans.sort((x,y)=>x[0]-y[0]);let tot=0,cs=spans[0][0],ce=spans[0][1];
+  for(const [a,b] of spans.slice(1)){if(a<=ce)ce=Math.max(ce,b);else{tot+=ce-cs;cs=a;ce=b}}
+  return tot+ce-cs;
+}
+const lvOf=j=>j.lv||"mid";
+const lvTag=j=>j.lv?LVL[j.lv]:"Level n/a";
+const SAMPLE_JOBS=[
+ {t:"Data Engineer",c:"Northwind Analytics",cty:"US",loc:"Austin, TX (hybrid)",h:6,a:9,s:["python","sql","airflow","aws","etl","snowflake"]},
+ {t:"Senior Data Engineer",c:"Harbor Freight Tech",cty:"US",loc:"Remote, US",h:20,a:41,s:["python","spark","kafka","aws","sql","kubernetes"]},
+ {t:"Analytics Engineer",c:"Lumen Commerce",cty:"US",loc:"New York, NY",h:30,a:112,s:["sql","dbt","snowflake","tableau","python"]},
+ {t:"Data Engineer",c:"Kestrel Systems",cty:"India",loc:"Bengaluru",h:9,a:14,s:["python","sql","spark","airflow","aws","docker"]},
+ {t:"Platform Data Engineer",c:"Vantage Pay",cty:"India",loc:"Pune (hybrid)",h:44,a:67,s:["kafka","kubernetes","python","aws","terraform"]},
+ {t:"BI Developer",c:"Orchid Health",cty:"India",loc:"Hyderabad",h:15,a:23,s:["tableau","sql","excel","data analysis","python"]},
+ {t:"Data Engineer",c:"Southern Cross Data",cty:"Australia",loc:"Sydney, NSW",h:12,a:6,s:["python","sql","airflow","aws","docker","etl"]},
+ {t:"Machine Learning Engineer",c:"Reef Robotics",cty:"Australia",loc:"Melbourne, VIC",h:55,a:88,s:["python","pytorch","docker","kubernetes","machine learning"]},
+ {t:"Data Platform Engineer",c:"Falcon Logistics",cty:"Dubai/UAE",loc:"Dubai",h:8,a:11,s:["python","spark","kafka","aws","kubernetes","sql"]},
+ {t:"Data Analyst",c:"Gulf Retail Group",cty:"Dubai/UAE",loc:"Abu Dhabi",h:36,a:52,s:["sql","tableau","excel","python","data analysis"]},
+ {t:"Data Engineer",c:"Alder Fintech",cty:"Europe",loc:"Berlin, Germany",h:18,a:19,s:["python","sql","airflow","kafka","aws","dbt"]},
+ {t:"Big Data Engineer",c:"Tulip Energy",cty:"Europe",loc:"Amsterdam, Netherlands",h:70,a:34,s:["spark","hadoop","python","kafka","sql"]},
+ {t:"Backend Engineer",c:"Quill Software",cty:"Remote",loc:"Remote, worldwide",h:25,a:130,s:["java","spring","postgresql","docker","aws"]},
+ {t:"Data Engineer (Contract)",c:"Basalt Labs",cty:"Remote",loc:"Remote, worldwide",h:10,a:17,s:["python","sql","airflow","docker","git","linux"]},
+ {t:"Frontend Developer",c:"Marigold Studio",cty:"US",loc:"Remote, US",h:5,a:3,s:["react","typescript","javascript","figma"]},
+ {t:"Data Scientist",c:"Cedar Insurance",cty:"US",loc:"Chicago, IL",h:100,a:175,s:["python","scikit-learn","sql","machine learning","pandas"]}
+].map((j,i)=>({...j,lv:levelOf(j.t,""),id:"s"+i,sample:true,src:"",text:(j.t+" "+j.s.join(" ")).toLowerCase(),desc:`${j.c} is hiring a ${j.t} to work on ${j.s.slice(0,3).join(", ")} and related tooling. You will build and maintain production systems, work with analysts and product teams, and own your work from design to monitoring.`}));
+const COUNTRIES=["US","India","Australia","UK","Canada","Singapore","Dubai/UAE","Europe","Remote"];
+const STAGES=["Saved","Applied","Interview","Offer","Rejected"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LS="jobscout.app.v1";
+let JOBS=[...SAMPLE_JOBS];
+const S={resume:"",key:"",ver:0,limit:50,lvl:"all",myLvl:"auto",skills:[],saved:[],snap:{},pipe:[],q:"",sort:"best",countries:new Set(COUNTRIES),hrs:72,app:60,min:20,onlySaved:false,tab:"profile",open:null,letters:{}};
+
+function persist(){try{localStorage.setItem(LS,JSON.stringify({resume:S.resume,skills:S.skills,saved:S.saved,snap:S.snap,pipe:S.pipe,letters:S.letters,myLvl:S.myLvl}))}catch(e){}}
+const MEMO=new Map();
+function bump(){S.ver++;MEMO.clear();S.words=null;S.limit=50}
+function restore(){
+  try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(d){Object.assign(S,{resume:d.resume??S.resume,skills:d.skills||[],saved:d.saved||[],snap:d.snap||{},pipe:d.pipe||[],letters:d.letters||{},myLvl:d.myLvl||"auto"});return true}}catch(e){}
+  return false;
+}
+function toast(m){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=m;$("toastbox").appendChild(t);setTimeout(()=>t.remove(),2600)}
+const ALIAS={go:"golang",spring:"spring (boot|framework|mvc)",excel:"(microsoft|ms|advanced) excel|excel (formulas|macros|vba)|vlookup|pivot tables?",sales:"sales (executive|manager|representative|rep|development|engineer|operations)|business development",operations:"operations (manager|analyst|lead)",finance:"financial (analysis|modeling|reporting)|finance",ios:"ios (developer|development|engineer)|swift"};
+const RE=new Map();
+function re(sk){let r=RE.get(sk);if(!r){const src=ALIAS[sk]||sk.replace(/[.+*?^${}()|[\]\\]/g,"\\$&");r=new RegExp("(^|[^\\w])("+src+")($|[^\\w])");RE.set(sk,r)}return r}
+function hasWord(text,sk){return re(sk).test(text)}
+function extract(text){const low=text.toLowerCase();return SKILLS.filter(s=>hasWord(low,s))}
+function nameOf(){return (S.resume.split("\n").find(l=>l.trim())||"").trim().slice(0,60)||"Your Name"}
+
+const STOP=new Set("senior junior jr sr lead principal staff remote hybrid onsite contract temporary freelance full part time the and of for in at a an to with m f d w x i ii iii intern internship".split(" "));
+function words(){if(!S.words)S.words=new Set((S.resume.toLowerCase().match(/[a-z0-9+#.]{2,}/g)||[]).map(w=>w.replace(/\.+$/,"")));return S.words}
+function titleScore(t){const tk=(t.toLowerCase().match(/[a-z0-9+#.]{2,}/g)||[]).map(w=>w.replace(/\.+$/,"")).filter(w=>!STOP.has(w));
+  if(!tk.length)return 0;const W=words();return tk.filter(w=>W.has(w)).length/tk.length}
+function myLv(){
+  if(S.myLvl!=="auto")return S.myLvl;
+  if(S._my&&S._my.v===S.ver)return S._my.l;
+  const y=estYears(S.resume),l=y==null?null:lvFromYears(y);S._my={v:S.ver,l};return l;
+}
+function scoreJob(j){
+  const m=MEMO.get(j.id);if(m)return m;
+  const set=new Set(j.s);
+  for(const sk of S.skills) if(!set.has(sk)&&hasWord(j.text||"",sk)) set.add(sk);
+  const all=[...set],hit=all.filter(x=>S.skills.includes(x)),miss=all.filter(x=>!S.skills.includes(x));
+  const match=Math.min(1,hit.length/Math.max(Math.min(all.length,8),3));
+  const ts=titleScore(j.t);
+  const fresh=Math.exp(-j.h/48);
+  const low=j.a==null?.5:1-Math.min(j.a/100,1);
+  const my=myLv();let lf=0;
+  if(my&&j.lv){const df=Math.abs(LVORD.indexOf(my)-LVORD.indexOf(j.lv));lf=df===0?6:df===1?0:-12}
+  const r={all,hit,miss,match,ts,total:Math.max(0,Math.min(100,Math.round(100*(.45*match+.2*ts+.2*fresh+.15*low))+lf))};
+  MEMO.set(j.id,r);return r;
+}
+const ago=h=>h<1?"abhi":h<24?h+"h pehle":Math.round(h/24)+"d pehle";
+const appCls=a=>a==null?"":a<=25?"low":a<=60?"mid":"high";
+function ringSVG(v){const r=24,c=2*Math.PI*r,col=v>=70?"var(--good)":v>=45?"var(--accent)":"var(--warn)";
+  return `<div class="ring"><svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--line)" stroke-width="5"/><circle cx="28" cy="28" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c*v/100} ${c}"/></svg><span>${v}</span></div>`}
+
+/* ---------- Profile ---------- */
+function renderProfile(){
+  $("skills").innerHTML=S.skills.length?S.skills.map(s=>`<span class="chip on">${esc(s)}<button type="button" data-rm="${esc(s)}" aria-label="${esc(s)} hatao">×</button></span>`).join(""):'<span class="empty">Koi skill nahi. Resume analyze karo ya khud add karo.</span>';
+  const pct=Math.min(100,Math.round(Math.min(S.skills.length/12,1)*70+Math.min(S.resume.length/1200,1)*30));
+  $("strv").textContent=pct+"%";$("strbar").style.width=pct+"%";
+  $("strnote").textContent=pct>=80?"Profile strong hai.":S.skills.length<12?"12 ya zyada skills hone par matching behtar hoti hai.":"Resume me aur detail (projects, numbers) jodo.";
+  const fits=JOBS.map(j=>({j,...scoreJob(j)})).filter(r=>r.hit.length).sort((a,b)=>b.match-a.match);
+  const seen=new Set(),top=[];for(const r of fits){const k=r.j.t.replace(/\s*\(.*\)/,"");if(!seen.has(k)){seen.add(k);top.push({k,m:Math.round(r.match*100)})}if(top.length===4)break}
+  $("fits").innerHTML=top.length?top.map(x=>`<div class="fit"><span>${esc(x.k)}</span><b class="${x.m>=70?"low":"mid"}" style="font-family:var(--mono)">${x.m}% match</b></div>`).join(""):'<p class="empty">Skills add karte hi yahan roles dikhenge.</p>';
+  const ey=estYears(S.resume),ml=myLv();$("myLvl").value=S.myLvl;
+  $("lvlnote").textContent=S.myLvl!=="auto"?"Aapne level khud chuna hai. Isi ke hisaab se jobs upar aati hain.":ml?"Resume se andaza: "+LVL[ml]+(ey!=null?" (~"+(Math.round(ey*10)/10)+" saal)":"")+". Galat ho to upar se badlo.":"Resume se level samajh nahi aaya. Upar se chuno, taaki aapke level ki jobs upar aayein.";
+}
+function analyze(){S.resume=$("resume").value;S.skills=extract(S.resume);bump();persist();renderAll();toast(S.skills.length?S.skills.length+" skills mile":"Koi known skill nahi mila. Neeche khud add karo.")}
+
+/* ---------- Jobs ---------- */
+function rel(r){return r.hit.length>0||r.ts>=.6}
+function visibleJobs(){
+  const q=S.q.trim().toLowerCase();
+  const qok=j=>!q||(j.t+" "+j.c).toLowerCase().includes(q);
+  let rows;
+  if(S.onlySaved){
+    rows=S.saved.map(id=>JOBS.find(j=>j.id===id)||S.snap[id]).filter(j=>j&&qok(j)).map(j=>({j,...scoreJob(j)}));
+  }else{
+    rows=JOBS.map(j=>({j,...scoreJob(j)})).filter(r=>rel(r)&&
+      S.countries.has(r.j.cty)&&r.j.h<=S.hrs&&(r.j.a==null||r.j.a<=S.app)&&Math.round(r.match*100)>=S.min&&qok(r.j));
+  }
+  S.lc={all:rows.length,fresher:0,mid:0,senior:0,lead:0};rows.forEach(r=>S.lc[lvOf(r.j)]++);
+  if(S.lvl!=="all")rows=rows.filter(r=>lvOf(r.j)===S.lvl);
+  rows.sort(S.sort==="new"?(a,b)=>a.j.h-b.j.h:S.sort==="few"?(a,b)=>(a.j.a??999)-(b.j.a??999):(a,b)=>b.total-a.total);
+  return rows;
+}
+function renderSeg(){
+  const c=S.lc||{all:0,fresher:0,mid:0,senior:0,lead:0},my=myLv();
+  $("lvl").innerHTML=[["all","Sab"],["fresher","Fresher"],["mid","Mid"],["senior","Senior"],["lead","Lead / Manager"]].map(([k,l])=>`<button type="button" data-lvl="${k}" aria-pressed="${S.lvl===k}">${l}${my===k?" ★":""}<span class="n">${c[k]}</span></button>`).join("");
+}
+function renderJobs(){
+  $("hrsv").textContent=S.hrs+" hrs";$("appv").textContent=S.app;$("minv").textContent=S.min+"%";
+  if(!S.skills.length&&!S.onlySaved){
+    $("stats").innerHTML="";$("srcnote").innerHTML=srcNote();
+    $("jobs").innerHTML='<div class="panel stack"><b>Pehle apna resume do</b><span class="empty">Profile tab me resume upload ya paste karo. Uske skills se hi jobs rank hoti hain.</span><div><button type="button" class="primary" data-tab="profile">Profile par jao</button></div></div>';return}
+  const rows=visibleJobs();renderSeg();
+  const hot=rows.filter(r=>r.j.h<=24&&(r.j.a==null||r.j.a<=25)).length;
+  $("stats").innerHTML=`<div class="stat"><b>${rows.length}</b><span>Matching jobs</span></div><div class="stat"><b>${hot}</b><span>24h ke andar post hui</span></div><div class="stat"><b>${rows[0]?rows[0].total:"-"}</b><span>Top score</span></div><div class="stat"><b>${S.saved.length}</b><span>Saved jobs</span></div>`;
+  $("srcnote").innerHTML=srcNote();
+  $("jobs").innerHTML=rows.length?rows.slice(0,S.limit).map(r=>`<div class="job" data-open="${esc(r.j.id)}" tabindex="0" role="button" aria-label="${esc(r.j.t)} details">
+    ${ringSVG(r.total)}
+    <div><h3>${esc(r.j.t)} · ${esc(r.j.c)}</h3>
+    <div class="meta"><span>${esc(r.j.loc)}</span><span>${lvTag(r.j)}</span><span>${ago(r.j.h)}</span>${r.j.a==null?(r.j.h<=24?'<span class="low">early applicant</span>':"")+(r.j.src?`<span>via ${esc(r.j.src)}</span>`:""):`<span class="${appCls(r.j.a)}">${r.j.a} applicants</span>`}</div>
+    <div class="chips">${[...r.hit,...r.miss].slice(0,8).map(s=>`<span class="chip ${r.hit.includes(s)?"hit":""}">${esc(s)}</span>`).join("")}</div></div>
+    <button type="button" class="star ${S.saved.includes(r.j.id)?"on":""}" data-save="${esc(r.j.id)}" aria-label="Save">${S.saved.includes(r.j.id)?"★":"☆"}</button></div>`).join("")+(rows.length>S.limit?`<button type="button" class="primary" data-more="1">Aur dikhao (${rows.length-S.limit} baaki)</button>`:""):
+    '<div class="panel empty">'+(S.onlySaved?"Abhi koi saved job nahi. Kisi job par ☆ dabao.":"Filters ke saath koi job nahi mili. Experience level Sab karo, posted-in-last badhao, min match kam karo, ya aur countries chuno.")+'</div>';
+}
+
+/* ---------- Drawer ---------- */
+function letterFor(j){
+  const {hit}=scoreJob(j),top=hit.slice(0,4).join(", ")||"data work";
+  return `Subject: Application for ${j.t}\n\nDear ${j.c} hiring team,\n\nI am applying for the ${j.t} role. My background lines up closely with what you listed, especially ${top}. In my current role I build and run production systems end to end, and I own the results.\n\nI would bring that same ownership to ${j.c}: dependable work, clear documentation, and quick iteration with the people who depend on it. I would welcome a short call to discuss where I can help first.\n\nThank you for your time,\n${nameOf()}`;
+}
+function openJob(id){
+  const j=JOBS.find(x=>x.id===id);if(!j)return;S.open=id;
+  const r=scoreJob(j),inPipe=S.pipe.some(p=>p.job.id===id);
+  const tips=[];
+  if(r.miss.length)tips.push(`Job me ${r.miss.slice(0,3).map(esc).join(", ")} bhi manga gaya hai. Agar aapne ye kiya hai to resume me ek bullet jodo, warna cover letter me seekhne ki taiyari likho.`);
+  if(j.h<=24)tips.push("Ye 24 ghante ke andar post hui hai. Pehle kuch din me apply karna sabse behtar hota hai.");
+  if(j.a!=null&&j.a<=25)tips.push("Applicants kam hain, to aaj hi apply karo.");
+  if(j.a==null)tips.push("Is source me applicant count nahi aata. Isliye freshness ko competition ka andaza maana gaya hai.");
+  const my=myLv();
+  if(!j.lv)tips.push("Job me experience level nahi likha, isliye Mid maana gaya. Job page par years of experience ek baar check karo.");
+  else if(my&&Math.abs(LVORD.indexOf(my)-LVORD.indexOf(j.lv))>=2)tips.push("Ye role aapke experience level se kaafi door hai ("+LVL[j.lv]+"). Agar phir bhi apply karna hai to cover letter me wajah likho.");
+  tips.push("Cover letter me ek asli number ya result jodo, jaise kitna data ya kitna time bachaya.");
+  $("layer").innerHTML=`<div class="shade" data-close="1"></div>
+  <aside class="drawer" role="dialog" aria-label="${esc(j.t)}">
+    <div class="dh">${ringSVG(r.total)}<div style="min-width:0;flex:1"><h3>${esc(j.t)}</h3><div class="meta" style="margin:2px 0 0"><span>${esc(j.c)}</span><span>${esc(j.loc)}</span><span>${lvTag(j)}</span><span>${ago(j.h)}</span>${j.a==null?(j.src?`<span>via ${esc(j.src)}</span>`:""):`<span class="${appCls(j.a)}">${j.a} applicants</span>`}</div></div>
+      <button type="button" class="ghost" data-close="1" aria-label="Band karo">✕</button></div>
+    <div class="row">
+      <button type="button" class="primary" data-pipe="${esc(id)}" ${inPipe?"disabled":""}>${inPipe?"Pipeline me hai":"Pipeline me add karo"}</button>
+      <button type="button" class="star ${S.saved.includes(id)?"on":""}" data-save="${esc(id)}">${S.saved.includes(id)?"★ Saved":"☆ Save"}</button>
+      ${j.url?`<a href="${esc(j.url)}" target="_blank" rel="noopener"><button type="button">Job page kholo ↗</button></a>`:`<button type="button" disabled title="Sample job">Sample job</button>`}
+    </div>
+    <div class="sec"><h5>Aapke matching skills (${r.hit.length}/${r.all.length})</h5><div class="chips">${r.hit.map(s=>`<span class="chip hit">${esc(s)}</span>`).join("")||'<span class="empty">Koi nahi</span>'}</div></div>
+    <div class="sec"><h5>Gap: job me hai, resume me nahi</h5><div class="chips">${r.miss.map(s=>`<span class="chip miss">${esc(s)}</span>`).join("")||'<span class="empty">Koi gap nahi</span>'}</div></div>
+    <div class="sec"><h5>Job description</h5><p style="margin:0;font-size:14px">${esc(j.desc)}</p></div>
+    <div class="sec"><h5>Tips</h5><ul class="tips">${tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>
+    <div class="sec"><h5>Cover letter (edit kar sakte ho)</h5>
+      <textarea id="letter" rows="14" aria-label="Cover letter">${esc(S.letters[id]??letterFor(j))}</textarea>
+      <div class="row" style="margin-top:8px"><button type="button" id="copy">Copy karo</button><button type="button" id="ai" ${S.key?"":"disabled"} title="${S.key?"":"Profile tab me Anthropic key add karo"}">AI se letter likho</button><button type="button" id="reset" class="ghost">Reset</button></div>
+      <p class="foot">Default letter template se banta hai. AI button resume aur job padhkar likhta hai. Bhejne se pehle har baat check karo.</p></div>
+  </aside>`;
+  $("letter").oninput=e=>{S.letters[id]=e.target.value;persist()};
+  $("reset").onclick=()=>{delete S.letters[id];$("letter").value=letterFor(j);persist()};
+  $("ai").onclick=async()=>{const b=$("ai");b.disabled=true;b.textContent="Likh raha hai...";
+    try{const t=await aiLetter(j);if(t){S.letters[id]=t;$("letter").value=t;persist();toast("Letter ready")}}
+    catch(e){toast(String(e.message||e).slice(0,120))}
+    if($("ai")){$("ai").disabled=!S.key;$("ai").textContent="AI se letter likho"}};
+  $("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("letter").value);toast("Copy ho gaya")}catch(e){$("letter").select();toast("Select ho gaya, Ctrl+C dabao")}};
+  $("layer").querySelector("button[data-close]").focus();
+}
+function closeJob(){S.open=null;$("layer").innerHTML=""}
+
+/* ---------- Pipeline ---------- */
+function addPipe(id,stage="Saved"){const j=JOBS.find(x=>x.id===id);if(!j||S.pipe.some(p=>p.job.id===id))return;S.pipe.push({job:j,stage});persist();renderAll();toast("Pipeline me add hua")}
+function renderPipe(){
+  $("kanban").innerHTML=STAGES.map(st=>{const items=S.pipe.filter(p=>p.stage===st);
+    return `<div class="col" data-stage="${st}"><h4><span>${st}</span><span>${items.length}</span></h4>${
+      items.map(p=>`<div class="card" draggable="true" data-card="${esc(p.job.id)}"><b>${esc(p.job.t)}</b><small>${esc(p.job.c)} · ${esc(p.job.cty)}</small>${p.job.url?` <a href="${esc(p.job.url)}" target="_blank" rel="noopener">link ↗</a>`:""}
+      <select data-move="${esc(p.job.id)}" aria-label="Stage badlo">${STAGES.map(s=>`<option${s===p.stage?" selected":""}>${s}</option>`).join("")}</select>
+      <button type="button" class="ghost" data-del="${esc(p.job.id)}" style="padding:4px 0">Hatao</button></div>`).join("")||'<p class="empty">Khali</p>'}</div>`}).join("");
+}
+
+/* ---------- Shell ---------- */
+function renderAll(){
+  if($("resume").value!==S.resume)$("resume").value=S.resume;
+  renderProfile();renderJobs();renderPipe();
+  $("nJobs").textContent=visibleJobs().length;$("nPipe").textContent=S.pipe.length;
+}
+function setTab(t){S.tab=t;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+  ["profile","jobs","pipe"].forEach(v=>$("v-"+v).hidden=v!==t);}
+
+const FEED_TTL=6*36e5, CK=LS+".cache";
+let LIVE=false;
+function clean(h){h=h||"";if(h.indexOf("<")<0)return h.replace(/\s+/g," ").trim();const d=new DOMParser().parseFromString(h||"","text/html");return (d.body.textContent||"").replace(/\s+/g," ").trim()}
+function parseDate(v){if(v==null||v==="")return NaN;if(typeof v==="number")return v<1e12?v*1e3:v;
+  let t=String(v).trim();if(/^\d{4}-\d\d-\d\d[T ][\d:.]+$/.test(t))t=t.replace(" ","T")+"Z";return new Date(t).getTime()}
+function fromFeed(list){
+  return list.map(x=>{const d=clean(x.description||""),t=parseDate(x.posted);
+    return {id:String(x.id||x.url),t:String(x.title||""),c:String(x.company||""),cty:x.country||"Remote",loc:String(x.location||""),
+      h:isNaN(t)||t>Date.now()+36e5?99999:Math.max(0,Math.round((Date.now()-t)/36e5)),a:null,s:extract((x.title||"")+" "+d),url:/^https?:\/\//.test(x.url||"")?x.url:"",
+      src:x.source||"",lv:levelOf(String(x.title||""),d),text:((x.title||"")+" "+d).toLowerCase(),desc:d.slice(0,800)}}).filter(j=>j.url&&j.h<99999);
+}
+async function loadFeed(){
+  const r=await fetch("jobs.json",{cache:"no-store"});if(!r.ok)throw new Error("feed "+r.status);
+  const d=await r.json();return {jobs:fromFeed(d.jobs||[]),updated:d.updated||null,how:"feed"};
+}
+async function loadDirect(force){
+  let c=null;try{c=JSON.parse(localStorage.getItem(CK)||"null")}catch(e){}
+  if(c&&c.items&&Date.now()-c.t<FEED_TTL)return {jobs:fromFeed(c.items),updated:new Date(c.t).toISOString(),how:"cache"};
+  if(!force&&c&&c.fail&&Date.now()-c.fail<36e5)throw new Error("backoff");
+  const [a,b]=await Promise.allSettled([
+    fetch("https://remotive.com/api/remote-jobs?limit=150").then(r=>{if(!r.ok)throw 0;return r.json()}),
+    fetch("https://www.arbeitnow.com/api/job-board-api").then(r=>{if(!r.ok)throw 0;return r.json()})]);
+  const items=[];
+  if(a.status==="fulfilled")(a.value.jobs||[]).forEach(x=>items.push({id:"r"+x.id,title:x.title,company:x.company_name,country:"Remote",location:x.candidate_required_location||"Remote",posted:x.publication_date,url:x.url,description:x.description,source:"Remotive"}));
+  if(b.status==="fulfilled")(b.value.data||[]).forEach(x=>items.push({id:"a"+x.slug,title:x.title,company:x.company_name,country:"Europe",location:x.location||"Europe",posted:new Date(x.created_at*1000).toISOString(),url:x.url,description:(x.description||"").slice(0,1500),source:"Arbeitnow"}));
+  if(!items.length){try{localStorage.setItem(CK,JSON.stringify({...(c||{}),fail:Date.now()}))}catch(e){}throw new Error("direct blocked")}
+  const slim=items.map(x=>({...x,description:clean(x.description).slice(0,800)}));
+  try{localStorage.setItem(CK,JSON.stringify({t:Date.now(),items:slim}))}catch(e){}
+  return {jobs:fromFeed(slim),updated:new Date().toISOString(),how:"direct"};
+}
+function agoISO(iso){if(!iso)return "";const h=Math.round((Date.now()-new Date(iso))/36e5);return h<1?"abhi":h<24?h+"h pehle":Math.round(h/24)+"d pehle"}
+function srcNote(){
+  if(!LIVE)return "Sample data. Applicant counts sirf demo ke liye hain.";
+  const names=[...new Set(JOBS.map(j=>j.src).filter(Boolean))];
+  return `Sources: ${names.join(", ")||"-"}. Remotive ki jobs 24 ghante delayed hoti hain, har job apne original page par link karti hai. Adzuna ki jobs "Jobs by Adzuna" se hain. Applicant count kisi free source me nahi milta, isliye freshness ko competition ka andaza maana gaya hai.`;
+}
+async function refreshJobs(manual){
+  const btn=$("live");btn.disabled=true;btn.textContent="Load ho raha hai...";
+  let res=null;
+  try{res=await loadFeed()}catch(e){res=null}
+  if(!res||!res.jobs.length){try{res=await loadDirect(manual)}catch(e){res=null}}
+  btn.disabled=false;btn.textContent="Jobs refresh karo";
+  if(!res||!res.jobs.length){if(manual)toast("Live jobs nahi mil paayi. Sample data dikh raha hai.");return false}
+  const first=!LIVE;JOBS=res.jobs;LIVE=true;MEMO.clear();
+  if(first){S.hrs=168;$("hrs").value=168;S.app=200;$("app").value=200}
+  $("appbox").hidden=true;
+  $("mode").textContent="Live · "+JOBS.length+" jobs"+(res.updated?" · "+agoISO(res.updated):"");
+  $("banner").hidden=true;renderAll();
+  if(manual){setTab("jobs");toast(JOBS.length+" live jobs mili")}
+  return true;
+}
+function loadScript(src){return new Promise((ok,no)=>{const e=document.createElement("script");e.src=src;e.onload=ok;e.onerror=()=>no(new Error("script"));document.head.appendChild(e)})}
+function libErr(){const e=new Error("lib");e.code="LIB";return e}
+async function readFile(f){
+  const n=f.name.toLowerCase();
+  if(n.endsWith(".pdf")){
+    let lib;try{lib=await import("./vendor/pdf.min.mjs")}catch(e){throw libErr()}
+    lib.GlobalWorkerOptions.workerSrc=new URL("./vendor/pdf.worker.min.mjs",location.href).href;
+    let pdf;try{pdf=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise}catch(e){throw /worker|import|fetch|network|script/i.test(String(e&&e.message))?libErr():e}
+    let out="";for(let i=1;i<=pdf.numPages;i++){const c=await (await pdf.getPage(i)).getTextContent();out+=c.items.map(x=>x.str+(x.hasEOL?"\n":" ")).join("")+"\n"}
+    return out;
+  }
+  if(n.endsWith(".docx")){
+    if(!window.JSZip){try{await loadScript("./vendor/jszip.min.js")}catch(e){throw libErr()}}
+    const z=await JSZip.loadAsync(await f.arrayBuffer());
+    const xml=await z.file("word/document.xml").async("string");
+    const d=new DOMParser().parseFromString(xml,"application/xml");
+    return [...d.getElementsByTagName("w:p")].map(p=>[...p.getElementsByTagName("*")].map(n=>n.nodeName==="w:t"?n.textContent:n.nodeName==="w:tab"?"\t":n.nodeName==="w:br"?"\n":"").join("")).join("\n");
+  }
+  return await f.text();
+}
+
+/* ---------- AI cover letter (optional, user's own key) ---------- */
+function loadKey(){try{S.key=localStorage.getItem(LS+".key")||""}catch(e){}}
+function renderKey(){$("keynote").textContent=S.key?"Key save hai (sirf is browser me). Job detail me 'AI se letter likho' chalega.":"Key daalne par job detail me AI se tailored letter ban sakta hai. Key sirf aapke browser me rehti hai aur seedha Anthropic ko jati hai. Spend limit wali key use karo."}
+async function aiLetter(j){
+  const r=scoreJob(j);
+  const prompt="Write a tailored cover letter of about 180 words for this job. Use only facts that appear in the resume. Do not invent employers, numbers or skills. Plain text, no markdown. Start with 'Dear "+j.c+" hiring team,' and end with the candidate's name.\n\nRESUME:\n"+S.resume.slice(0,8000)+"\n\nJOB: "+j.t+" at "+j.c+"\nMatching skills: "+r.hit.join(", ")+"\nDESCRIPTION:\n"+(j.text||j.desc).slice(0,3000);
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":S.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-5-5",max_tokens:900,messages:[{role:"user",content:prompt}]})});
+  if(!res.ok){const t=await res.text().catch(()=>"");throw new Error(res.status===401?"API key galat hai":res.status===429?"Rate limit, thodi der baad try karo":"API error "+res.status+" "+t.slice(0,80))}
+  const d=await res.json();return (d.content||[]).map(b=>b.text||"").join("").trim();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const tab=t.closest("[data-tab]");if(tab){setTab(tab.dataset.tab);return}
+  if(t.closest("[data-more]")){S.limit+=50;renderJobs();return}
+  const lv=t.closest("[data-lvl]");if(lv){S.lvl=lv.dataset.lvl;S.limit=50;renderJobs();$("nJobs").textContent=visibleJobs().length;return}
+  const sv=t.closest("[data-save]");if(sv){const id=sv.dataset.save,i=S.saved.indexOf(id);if(i<0){S.saved.push(id);const jj=JOBS.find(x=>x.id===id)||S.snap[id];if(jj)S.snap[id]=jj}else{S.saved.splice(i,1);delete S.snap[id]}persist();renderAll();if(S.open)openJob(S.open);return}
+  const pp=t.closest("[data-pipe]");if(pp){addPipe(pp.dataset.pipe);openJob(pp.dataset.pipe);return}
+  if(t.closest("[data-close]")){closeJob();return}
+  const rm=t.closest("[data-rm]");if(rm){S.skills=S.skills.filter(s=>s!==rm.dataset.rm);bump();persist();renderAll();return}
+  const del=t.closest("[data-del]");if(del){S.pipe=S.pipe.filter(p=>p.job.id!==del.dataset.del);persist();renderAll();return}
+  const c=t.closest("[data-c]");if(c){const k=c.dataset.c;S.countries.has(k)?S.countries.delete(k):S.countries.add(k);c.classList.toggle("on",S.countries.has(k));c.setAttribute("aria-pressed",S.countries.has(k));S.limit=50;renderJobs();$("nJobs").textContent=visibleJobs().length;return}
+  const op=t.closest("[data-open]");if(op&&!t.closest("button")){openJob(op.dataset.open)}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&S.open)closeJob();
+  if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.open){e.preventDefault();openJob(e.target.dataset.open)}
+});
+document.addEventListener("change",e=>{
+  if(e.target.dataset.move){const p=S.pipe.find(x=>x.job.id===e.target.dataset.move);if(p){p.stage=e.target.value;persist();renderAll()}}
+});
+document.addEventListener("dragstart",e=>{const c=e.target.closest&&e.target.closest("[data-card]");if(c)e.dataTransfer.setData("text/plain",c.dataset.card)});
+document.addEventListener("dragover",e=>{const col=e.target.closest&&e.target.closest(".col");if(col){e.preventDefault();document.querySelectorAll(".col").forEach(x=>x.classList.toggle("over",x===col))}});
+document.addEventListener("dragend",()=>document.querySelectorAll(".col").forEach(x=>x.classList.remove("over")));
+document.addEventListener("drop",e=>{const col=e.target.closest&&e.target.closest(".col");if(!col)return;e.preventDefault();
+  const id=e.dataTransfer.getData("text/plain"),p=S.pipe.find(x=>x.job.id===id);if(p){p.stage=col.dataset.stage;persist();renderAll()}});
+$("go").onclick=analyze;
+$("keyForm").onsubmit=e=>{e.preventDefault();const v=$("key").value.trim();if(!v)return;S.key=v;try{localStorage.setItem(LS+".key",v)}catch(x){}$("key").value="";renderKey();toast("Key save ho gayi")};
+$("keyDel").onclick=()=>{S.key="";try{localStorage.removeItem(LS+".key")}catch(x){}renderKey();toast("Key hata di")};
+$("sample").onclick=()=>{$("resume").value=SAMPLE;analyze()};
+$("pick").onclick=()=>$("file").click();
+$("file").onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{const t=await readFile(f);if(t.replace(/\s/g,"").length<30){toast("Is file me text nahi mila (scanned PDF?). Text paste karo.");return}$("resume").value=t;analyze()}
+  catch(err){toast(err&&err.code==="LIB"?"Is page par PDF/DOCX reader nahi chal raha. Resume ka text paste karo, ya GitHub par host kiya hua JobScout use karo.":"File padh nahi paaye. Text paste karke try karo.")}
+  e.target.value=""};
+$("resume").oninput=e=>{S.resume=e.target.value;bump();persist()};
+$("addForm").onsubmit=e=>{e.preventDefault();const v=$("addSkill").value.trim().toLowerCase();if(v&&!S.skills.includes(v)){S.skills.push(v);bump();persist();renderAll()}$("addSkill").value=""};
+$("myLvl").onchange=e=>{S.myLvl=e.target.value;bump();persist();renderAll()};
+$("seeJobs").onclick=()=>setTab("jobs");
+$("live").onclick=()=>refreshJobs(true);
+$("q").oninput=e=>{S.q=e.target.value;S.limit=50;renderJobs()};
+$("sort").onchange=e=>{S.sort=e.target.value;S.limit=50;renderJobs()};
+$("hrs").oninput=e=>{S.hrs=+e.target.value;S.limit=50;renderAll()};
+$("app").oninput=e=>{S.app=+e.target.value;S.limit=50;renderAll()};
+$("min").oninput=e=>{S.min=+e.target.value;S.limit=50;renderAll()};
+$("onlySaved").onchange=e=>{S.onlySaved=e.target.checked;S.limit=50;renderAll()};
+$("theme").onclick=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=dark?"light":"dark";try{localStorage.setItem(LS+".theme",r.dataset.theme)}catch(e){}};
+try{const th=localStorage.getItem(LS+".theme");if(th)document.documentElement.dataset.theme=th}catch(e){}
+
+$("countries").innerHTML=COUNTRIES.map(c=>`<button type="button" class="chip on" data-c="${esc(c)}" aria-pressed="true">${esc(c)}</button>`).join("");
+$("skillopts").innerHTML=SKILLS.map(s=>`<option value="${esc(s)}">`).join("");
+const had=restore();loadKey();
+if(S.resume&&!S.skills.length)S.skills=extract(S.resume);
+renderAll();renderKey();
+refreshJobs(false);
+if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}}
+</script>
+
+</html>

@@ -1,0 +1,11 @@
+{
+  "keywords": ["data engineer", "data analyst", "software engineer"],
+  "adzuna_countries": {
+    "US": "us", "India": "in", "Australia": "au", "UK": "gb", "Canada": "ca", "Singapore": "sg",
+    "Europe": ["de", "nl", "fr"]
+  },
+  "jooble_locations": { "Dubai/UAE": "United Arab Emirates" },
+  "max_days_old": 14,
+  "max_jobs": 3000,
+  "desc_chars": 1500
+}
